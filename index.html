@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🐰 Mochi's Magical Garden</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800;900&family=Lilita+One&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;min-height:100vh;overflow-x:hidden;cursor:none;}
+
+/* CURSOR - single trail emoji */
+#cur{position:fixed;pointer-events:none;z-index:9999;font-size:1.5rem;
+  transform:translate(-50%,-50%);transition:left .04s,top .04s;
+  animation:curFloat 2s ease-in-out infinite;}
+@keyframes curFloat{0%,100%{transform:translate(-50%,-50%) scale(1);}50%{transform:translate(-50%,-50%) scale(1.25);}}
+
+/* SKY */
+#sky{position:fixed;inset:0;z-index:0;overflow:hidden;transition:background 4s ease;}
+#sunEl{position:absolute;width:80px;height:80px;border-radius:50%;
+  background:radial-gradient(circle at 36% 36%,#fffde7,#fdd835);
+  box-shadow:0 0 60px 30px rgba(253,216,53,.5);
+  transition:all 4s ease;animation:sunP 5s ease-in-out infinite;}
+@keyframes sunP{0%,100%{box-shadow:0 0 60px 30px rgba(253,216,53,.5);}50%{box-shadow:0 0 90px 50px rgba(253,216,53,.7);}}
+#moonEl{position:absolute;width:66px;height:66px;border-radius:50%;
+  background:radial-gradient(circle at 34% 34%,#fffff0,#f5e642);
+  box-shadow:0 0 28px 12px rgba(245,230,66,.3);
+  opacity:0;transition:all 4s ease;}
+.crater{position:absolute;border-radius:50%;background:rgba(190,170,40,.25);}
+#starL{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 3s;}
+#starL.on{opacity:1;}
+.star{position:absolute;background:white;border-radius:50%;animation:twkl ease-in-out infinite alternate;}
+@keyframes twkl{from{opacity:.1;transform:scale(.5);}to{opacity:1;transform:scale(1.4);}}
+/* CLOUDS clickable */
+.cloud{position:absolute;border-radius:50px;cursor:pointer;
+  animation:cDrift linear infinite;transition:transform .2s,filter .2s;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.08));}
+.cloud:hover{transform:scale(1.1) translateY(-5px)!important;filter:drop-shadow(0 8px 18px rgba(255,110,180,.3));}
+.cloud::before,.cloud::after{content:'';position:absolute;background:inherit;border-radius:50%;}
+.cloud::before{width:62%;height:170%;top:-60%;left:18%;}
+.cloud::after{width:48%;height:135%;top:-46%;right:18%;}
+@keyframes cDrift{from{transform:translateX(-280px);}to{transform:translateX(112vw);}}
+/* weather */
+#rainW,#snowW{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2s;}
+#rainW.on,#snowW.on{opacity:1;}
+.rdrop{position:absolute;top:-30px;width:2px;border-radius:2px;
+  background:linear-gradient(180deg,rgba(140,190,255,0),rgba(80,150,255,.9));
+  animation:rFall linear infinite;}
+@keyframes rFall{to{transform:translateY(115vh) skewX(-10deg);}}
+.snow{position:absolute;top:-20px;animation:sFall linear infinite;}
+@keyframes sFall{to{transform:translateY(115vh) rotate(720deg);}}
+#stormL{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2s;}
+#stormL.on{opacity:1;}
+.flash{position:absolute;inset:0;background:transparent;animation:flashA 5s ease-in-out infinite;}
+@keyframes flashA{0%,85%,89%,93%,100%{background:transparent;}87%,91%{background:rgba(255,255,255,.4);}}
+#rainbow{position:absolute;top:50px;left:5%;width:90%;height:210px;
+  background:conic-gradient(from 180deg at 50% 100%,
+    rgba(255,50,50,.45) 0 17deg,rgba(255,140,0,.4) 17deg 34deg,
+    rgba(255,230,0,.42) 34deg 51deg,rgba(50,200,50,.42) 51deg 68deg,
+    rgba(30,100,255,.42) 68deg 85deg,rgba(148,0,211,.4) 85deg 102deg,transparent 102deg);
+  border-radius:50% 50% 0 0/100% 100% 0 0;opacity:0;transition:opacity 3s;pointer-events:none;}
+#rainbow.on{opacity:.75;}
+/* cloud burst particles */
+.cburst{position:fixed;pointer-events:none;z-index:999;animation:cbOut 1.2s ease-out forwards;}
+@keyframes cbOut{0%{transform:scale(0) rotate(0);opacity:1;}60%{transform:scale(1.4) rotate(180deg);opacity:1;}100%{transform:scale(.1) rotate(360deg) translateY(-80px);opacity:0;}}
+
+/* GROUND */
+#gScene{position:fixed;bottom:0;left:0;right:0;z-index:2;pointer-events:none;}
+.gWrap{position:relative;width:100%;max-width:1100px;margin:0 auto;height:540px;pointer-events:all;}
+.hill{position:absolute;bottom:0;border-radius:50% 50% 0 0;transition:background 4s;}
+.h1{left:-8%;right:-8%;height:230px;}
+.h2{left:-12%;right:-12%;height:160px;}
+.h3{left:-16%;right:-16%;height:100px;}
+.dirt{position:absolute;bottom:0;left:-18%;right:-18%;height:28px;background:linear-gradient(180deg,#8d6e63,#6d4c41);}
+#gSvg{position:absolute;bottom:94px;left:0;width:100%;height:120px;pointer-events:none;}
+/* scene flowers */
+.fd{position:absolute;animation:fS 2.6s ease-in-out infinite alternate;
+  cursor:pointer;user-select:none;transition:transform .2s;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.1));}
+.fd:hover{transform:scale(1.65) rotate(22deg)!important;}
+@keyframes fS{from{transform:rotate(-7deg) scale(1);}to{transform:rotate(7deg) scale(1.08);}}
+.bfly{position:absolute;font-size:1.4rem;animation:fly 11s ease-in-out infinite;
+  pointer-events:none;transition:opacity 1.5s;}
+@keyframes fly{0%{transform:translate(0,0) scaleX(1);}25%{transform:translate(65px,-38px) scaleX(-1);}50%{transform:translate(148px,12px) scaleX(1);}75%{transform:translate(65px,52px) scaleX(-1);}100%{transform:translate(0,0) scaleX(1);}}
+
+/* BUNNY */
+.bw{position:absolute;bottom:152px;left:50%;transform:translateX(-50%);
+  cursor:pointer;z-index:20;filter:drop-shadow(0 12px 30px rgba(255,110,180,.25));}
+.bw:hover{filter:drop-shadow(0 15px 36px rgba(255,110,180,.5));}
+.bw.hop{animation:bHop .55s cubic-bezier(.34,1.56,.64,1);}
+.bw.spin{animation:bSpin .6s ease-in-out;}
+.bw.wiggle{animation:bWig .5s ease-in-out;}
+.bw.dancing{animation:bDance .75s ease-in-out infinite;}
+@keyframes bHop{0%{transform:translateX(-50%) translateY(0);}40%{transform:translateX(-50%) translateY(-78px) rotate(-7deg);}70%{transform:translateX(-50%) translateY(-30px) rotate(5deg);}100%{transform:translateX(-50%) translateY(0);}}
+@keyframes bSpin{0%{transform:translateX(-50%) rotate(0);}100%{transform:translateX(-50%) rotate(360deg);}}
+@keyframes bWig{0%,100%{transform:translateX(-50%) rotate(0);}25%{transform:translateX(-50%) rotate(-15deg);}75%{transform:translateX(-50%) rotate(15deg);}}
+@keyframes bDance{0%{transform:translateX(-50%) translateY(0) rotate(-9deg) scale(1);}25%{transform:translateX(-50%) translateY(-20px) rotate(9deg) scale(1.06);}50%{transform:translateX(-50%) translateY(0) rotate(-9deg) scale(1);}75%{transform:translateX(-50%) translateY(-16px) rotate(9deg) scale(1.06);}100%{transform:translateX(-50%) translateY(0) rotate(-9deg) scale(1);}}
+svg.bun{width:200px;height:250px;}
+.eI{animation:eP 3.5s ease-in-out infinite;}
+@keyframes eP{0%,100%{fill:#ffb3d0;}50%{fill:#ff85b0;}}
+.eO{animation:blnk 5s ease-in-out infinite;transform-origin:center;}
+@keyframes blnk{0%,92%,100%{transform:scaleY(1);}95%,97%{transform:scaleY(.06);}}
+.tl{animation:tW 1.8s ease-in-out infinite alternate;transform-origin:20% 50%;}
+@keyframes tW{from{transform:rotate(-20deg);}to{transform:rotate(20deg);}}
+.ns{animation:nT 3s ease-in-out infinite;}
+@keyframes nT{0%,100%{transform:scale(1);}50%{transform:scale(1.2);}}
+
+/* floating food */
+#food{position:absolute;bottom:370px;left:50%;transform:translateX(-50%);
+  font-size:3rem;opacity:0;pointer-events:none;z-index:25;}
+#food.show{animation:foodAnim 2.8s ease-in-out forwards;}
+@keyframes foodAnim{0%{transform:translateX(-50%) translateY(0) scale(.4);opacity:0;}15%{transform:translateX(-50%) translateY(-25px) scale(1.4);opacity:1;}65%{transform:translateX(-50%) translateY(-15px) scale(1.1);opacity:1;}100%{transform:translateX(-50%) translateY(-70px) scale(.2);opacity:0;}}
+/* dance notes */
+#notes{position:absolute;bottom:390px;left:50%;transform:translateX(-50%);
+  font-size:1.8rem;opacity:0;pointer-events:none;z-index:25;}
+#notes.show{opacity:1;}
+.nt{display:inline-block;animation:ntFly 1.4s ease-out infinite;margin:0 4px;}
+.nt:nth-child(2){animation-delay:.3s;}.nt:nth-child(3){animation-delay:.6s;}
+@keyframes ntFly{0%{transform:translateY(0) rotate(-10deg);opacity:1;}100%{transform:translateY(-55px) rotate(20deg);opacity:0;}}
+/* speech */
+#sp{position:absolute;bottom:380px;left:57%;transform:translateX(-8%) scale(.8);
+  background:white;border:3px solid #ff6eb4;border-radius:22px 22px 22px 4px;
+  padding:10px 18px;font-family:'Baloo 2',cursive;font-size:1rem;font-weight:700;color:#c0396b;
+  max-width:240px;text-align:center;box-shadow:4px 4px 0 rgba(255,110,180,.28);
+  opacity:0;pointer-events:none;z-index:30;transition:opacity .25s,transform .25s;}
+#sp.show{opacity:1;transform:translateX(-8%) scale(1);}
+#sp::after{content:'';position:absolute;bottom:-14px;left:14px;border:7px solid transparent;border-top-color:#ff6eb4;}
+
+/* WARDROBE beside bunny */
+#ward{position:absolute;right:0;bottom:118px;width:132px;z-index:25;
+  background:rgba(255,255,255,.92);border-radius:20px 0 0 20px;
+  border:2.5px solid rgba(255,182,193,.5);border-right:none;
+  box-shadow:-6px 0 30px rgba(255,110,180,.14);backdrop-filter:blur(14px);
+  padding:12px 8px;}
+.wT{font-family:'Lilita One',cursive;font-size:.82rem;color:#e91e8c;
+  text-align:center;margin-bottom:7px;border-bottom:2px dashed rgba(255,182,193,.5);padding-bottom:5px;}
+.wI{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:11px;
+  cursor:pointer;transition:all .2s;margin-bottom:3px;
+  font-family:'Baloo 2',cursive;font-size:.78rem;font-weight:700;color:#9b4dca;
+  border:2px solid transparent;background:rgba(255,240,252,.6);}
+.wI:hover{background:rgba(255,200,235,.55);border-color:#ffb3d1;transform:translateX(-3px);}
+.wI.on{background:linear-gradient(135deg,#ffe0f5,#ffd0e8);border-color:#ff6eb4;color:#c0396b;}
+.wE{font-size:1.3rem;}.wL{font-size:.74rem;}
+
+/* PAGE */
+.sPage{position:relative;z-index:5;}
+.pH{text-align:center;padding:82px 16px 20px;}
+.hT{font-family:'Lilita One',cursive;font-size:clamp(2.4rem,7vw,5.4rem);color:white;
+  text-shadow:4px 4px 0 #e91e8c,8px 8px 0 rgba(233,30,140,.2);
+  line-height:1.05;animation:tIn .7s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes tIn{from{opacity:0;transform:scale(.35) rotate(-8deg);}to{opacity:1;transform:scale(1);}}
+.hS{font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:700;
+  color:rgba(255,255,255,.92);text-shadow:1px 2px 0 rgba(233,30,140,.35);
+  margin-top:8px;animation:fUp .8s .3s both;}
+@keyframes fUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.con{max-width:820px;margin:0 auto;padding:0 16px 60px;}
+.gc{background:rgba(255,255,255,.84);border-radius:28px;padding:20px 24px;
+  border:2.5px solid rgba(255,182,193,.35);
+  box-shadow:0 8px 40px rgba(255,110,180,.1),inset 0 1px 0 rgba(255,255,255,.9);
+  backdrop-filter:blur(14px);margin-bottom:18px;}
+.ct{font-family:'Lilita One',cursive;font-size:1.3rem;color:#e91e8c;margin-bottom:12px;}
+/* stats */
+.sr{display:flex;align-items:center;gap:10px;margin:6px 0;}
+.si{font-size:1.2rem;width:28px;text-align:center;}
+.sn{font-weight:800;font-size:.8rem;color:#9b4dca;width:76px;text-transform:uppercase;letter-spacing:.4px;}
+.bb{flex:1;height:15px;background:#f3e8ff;border-radius:99px;border:2px solid rgba(180,100,210,.15);overflow:hidden;}
+.bf{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.34,1.56,.64,1);}
+.bv{font-weight:900;font-size:.82rem;color:#b565a7;width:34px;text-align:right;}
+/* mood */
+.mA{text-align:center;margin:12px 0 4px;}
+.mP{display:inline-block;font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:800;
+  padding:6px 26px;border-radius:999px;box-shadow:0 3px 12px rgba(0,0,0,.1);
+  transition:all .5s cubic-bezier(.34,1.56,.64,1);}
+.wb{display:inline-flex;align-items:center;gap:5px;font-family:'Baloo 2',cursive;
+  font-size:.85rem;font-weight:800;padding:4px 15px;border-radius:999px;margin-left:8px;
+  background:rgba(255,255,255,.72);color:#e91e8c;border:2px solid #ffb3ce;transition:all 2s;}
+/* action progress */
+.aBar{height:5px;border-radius:99px;background:rgba(255,110,180,.15);margin-top:10px;overflow:hidden;display:none;}
+.aBar.show{display:block;}
+.aFill{height:100%;border-radius:99px;background:linear-gradient(90deg,#ff6eb4,#e91e8c);width:0%;transition:width linear;}
+/* buttons */
+.bg{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px;}
+.ab{font-family:'Baloo 2',cursive;font-size:.93rem;font-weight:800;
+  border:none;border-radius:999px;padding:9px 18px;cursor:pointer;color:white;
+  position:relative;overflow:hidden;box-shadow:0 4px 0 rgba(0,0,0,.17);transition:all .17s;}
+.ab:hover{transform:translateY(-3px);box-shadow:0 7px 0 rgba(0,0,0,.17);}
+.ab:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.17);}
+.ab.busy{opacity:.5;cursor:not-allowed;transform:none!important;box-shadow:0 4px 0 rgba(0,0,0,.1)!important;}
+.ab::after{content:'';position:absolute;top:-50%;left:-60%;width:36%;height:200%;
+  background:rgba(255,255,255,.25);transform:skewX(-20deg);transition:left .4s;}
+.ab:hover::after{left:130%;}
+.bpat{background:linear-gradient(135deg,#ff6eb4,#e91e8c);}
+.bfd{background:linear-gradient(135deg,#ffb347,#e65100);}
+.bpl{background:linear-gradient(135deg,#5ddba9,#00796b);}
+.bsl{background:linear-gradient(135deg,#b39ddb,#512da8);}
+.bks{background:linear-gradient(135deg,#f06292,#880e4f);}
+.bdn{background:linear-gradient(135deg,#ffe082,#f57f17);color:#4e2800;}
+.btr{background:linear-gradient(135deg,#ef9a9a,#b71c1c);}
+.bplt{background:linear-gradient(135deg,#80cbc4,#004d40);}
+/* garden */
+.gb{background:linear-gradient(180deg,rgba(200,230,180,.92),rgba(160,210,160,.92));
+  border-radius:26px;padding:20px 22px;border:2.5px solid #81c784;
+  box-shadow:0 6px 24px rgba(76,175,80,.18);margin-bottom:18px;
+  position:relative;overflow:hidden;}
+.gb::after{content:'🌱🌿🍀🌱🌿🍀🌱🌿🍀🌱🌿🍀';position:absolute;bottom:2px;left:0;right:0;
+  font-size:1rem;letter-spacing:7px;opacity:.3;text-align:center;pointer-events:none;}
+.gT{font-family:'Lilita One',cursive;font-size:1.3rem;color:#1b5e20;text-align:center;margin-bottom:10px;}
+.planted{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;min-height:44px;margin-bottom:10px;}
+.pf{font-size:2.2rem;display:inline-block;cursor:pointer;
+  animation:gI .45s cubic-bezier(.34,1.56,.64,1) both;transition:transform .2s;}
+.pf:hover{transform:scale(1.5) rotate(14deg);}
+@keyframes gI{from{transform:scale(0) rotate(-20deg);opacity:0;}to{transform:scale(1);opacity:1;}}
+/* diary */
+.de{font-size:.87rem;font-weight:700;color:#7b4f8a;padding:5px 0;
+  border-bottom:2px dashed rgba(214,51,132,.1);animation:slIn .35s cubic-bezier(.34,1.56,.64,1) both;}
+@keyframes slIn{from{opacity:0;transform:translateX(-12px);}to{opacity:1;transform:translateX(0);}}
+.dt{color:#c077c0;font-size:.75rem;margin-right:5px;}
+/* petals */
+.petal{position:fixed;pointer-events:none;z-index:1;animation:pFall linear infinite;}
+@keyframes pFall{0%{transform:translateY(-5vh) rotate(0) translateX(0);opacity:0;}7%{opacity:.9;}92%{opacity:.8;}100%{transform:translateY(108vh) rotate(540deg) translateX(55px);opacity:0;}}
+/* time badge */
+#tBdg{position:fixed;top:14px;right:14px;z-index:100;
+  font-family:'Baloo 2',cursive;font-size:.88rem;font-weight:800;
+  background:rgba(255,255,255,.78);backdrop-filter:blur(10px);
+  border-radius:999px;padding:6px 18px;
+  border:2px solid rgba(255,182,193,.45);color:#c0396b;
+  box-shadow:0 4px 16px rgba(255,110,180,.14);transition:all 1s;}
+@media(max-width:640px){
+  svg.bun{width:158px;height:198px;}.gWrap{height:430px;}
+  #ward{width:108px;bottom:96px;}.wI{padding:5px 6px;}.wE{font-size:1.1rem;}
+}
+</style>
+</head>
+<body>
+<div id="cur">🌸</div>
+<div id="tBdg">🌸 12:00 PM</div>
+
+<!-- SKY -->
+<div id="sky">
+  <div id="starL"></div>
+  <div id="sunEl" style="top:28px;right:110px;"></div>
+  <div id="moonEl" style="top:28px;right:110px;">
+    <div class="crater" style="width:12px;height:12px;top:17px;left:16px;"></div>
+    <div class="crater" style="width:8px;height:8px;top:37px;left:37px;"></div>
+    <div class="crater" style="width:6px;height:6px;top:13px;left:40px;"></div>
+  </div>
+  <div id="rainbow"></div>
+  <div id="stormL"><div class="flash"></div></div>
+  <div id="rainW"></div>
+  <div id="snowW"></div>
+</div>
+
+<!-- GROUND SCENE -->
+<div id="gScene">
+<div class="gWrap" id="gWrap">
+  <div class="hill h1" id="h1"></div>
+  <div class="hill h2" id="h2"></div>
+  <div class="hill h3" id="h3"></div>
+  <div class="dirt"></div>
+
+  <!-- Creative SVG grass -->
+  <svg id="gSvg" viewBox="0 0 1100 120" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="g1" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#2e7d32"/><stop offset="100%" stop-color="#a5d6a7"/></linearGradient>
+      <linearGradient id="g2" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#388e3c"/><stop offset="100%" stop-color="#c8e6c9"/></linearGradient>
+      <linearGradient id="g3" x1="0%" y1="100%" x2="0%" y2="0%"><stop offset="0%" stop-color="#1b5e20"/><stop offset="100%" stop-color="#81c784"/></linearGradient>
+    </defs>
+    <style>
+      .gb1{animation:sw1 2.2s ease-in-out infinite alternate;transform-origin:center bottom;}
+      .gb2{animation:sw2 1.8s ease-in-out infinite alternate;transform-origin:center bottom;}
+      @keyframes sw1{from{transform:rotate(-4deg);}to{transform:rotate(4deg);}}
+      @keyframes sw2{from{transform:rotate(-8deg);}to{transform:rotate(8deg);}}
+    </style>
+    <!-- back blades tall -->
+    <g class="gb1">
+      <path d="M30,120 C30,120 27,75 32,44 C35,28 25,8 30,0 C35,12 40,32 38,46 C42,77 40,120 40,120Z" fill="url(#g3)" opacity=".7"/>
+      <path d="M85,120 C85,120 82,72 87,40 C90,24 80,4 85,0 C90,8 94,28 92,42 C96,74 94,120 94,120Z" fill="url(#g2)" opacity=".75"/>
+      <path d="M145,120 C145,120 142,76 147,46 C150,30 140,9 145,0 C150,11 154,32 152,47 C156,77 154,120 154,120Z" fill="url(#g1)" opacity=".8"/>
+      <path d="M205,120 C205,120 202,80 207,52 C210,36 200,14 205,3 C210,16 214,38 212,53 C216,81 214,120 214,120Z" fill="url(#g2)" opacity=".7"/>
+      <path d="M265,120 C265,120 262,68 268,36 C271,20 261,0 266,0 C271,5 275,26 273,38 C277,70 275,120 275,120Z" fill="url(#g3)" opacity=".75"/>
+      <path d="M355,120 C355,120 352,74 358,44 C361,28 351,8 356,0 C361,12 365,34 363,46 C367,75 365,120 365,120Z" fill="url(#g1)" opacity=".8"/>
+      <path d="M445,120 C445,120 442,70 448,40 C451,24 441,4 446,0 C451,9 455,30 453,42 C457,72 455,120 455,120Z" fill="url(#g2)" opacity=".7"/>
+      <path d="M545,120 C545,120 542,78 547,48 C550,32 540,11 545,1 C550,14 554,36 552,50 C556,79 554,120 554,120Z" fill="url(#g3)" opacity=".75"/>
+      <path d="M645,120 C645,120 642,74 648,44 C651,28 641,8 646,0 C651,12 655,33 653,46 C657,75 655,120 655,120Z" fill="url(#g1)" opacity=".8"/>
+      <path d="M735,120 C735,120 732,70 738,40 C741,24 731,4 736,0 C741,9 745,30 743,42 C747,72 745,120 745,120Z" fill="url(#g2)" opacity=".7"/>
+      <path d="M825,120 C825,120 822,76 828,46 C831,30 821,10 826,0 C831,13 835,34 833,48 C837,77 835,120 835,120Z" fill="url(#g3)" opacity=".75"/>
+      <path d="M915,120 C915,120 912,72 918,42 C921,26 911,6 916,0 C921,10 925,31 923,43 C927,73 925,120 925,120Z" fill="url(#g1)" opacity=".8"/>
+      <path d="M995,120 C995,120 992,79 997,50 C1000,34 990,13 995,2 C1000,15 1004,37 1002,51 C1006,80 1004,120 1004,120Z" fill="url(#g2)" opacity=".7"/>
+      <path d="M1062,120 C1062,120 1059,75 1065,45 C1068,29 1058,9 1063,0 C1068,12 1072,33 1070,47 C1074,76 1072,120 1072,120Z" fill="url(#g3)" opacity=".75"/>
+    </g>
+    <!-- front blades -->
+    <g class="gb2">
+      <path d="M12,120 C12,120 10,92 16,68 C21,53 9,33 13,20 C19,34 25,54 23,70 C29,93 29,120 29,120Z" fill="#2e7d32"/>
+      <path d="M58,120 C58,120 56,89 62,65 C67,50 55,30 59,18 C65,32 71,52 69,66 C75,90 75,120 75,120Z" fill="#388e3c"/>
+      <path d="M110,120 C110,120 108,91 114,67 C119,52 107,32 111,20 C117,34 123,54 121,68 C127,92 127,120 127,120Z" fill="#2e7d32"/>
+      <path d="M168,120 C168,120 166,93 172,69 C177,54 165,34 169,22 C175,36 181,56 179,70 C185,94 185,120 185,120Z" fill="#1b5e20"/>
+      <path d="M225,120 C225,120 223,88 229,64 C234,49 222,29 226,17 C232,31 238,51 236,65 C242,89 242,120 242,120Z" fill="#388e3c"/>
+      <path d="M296,120 C296,120 294,90 300,66 C305,51 293,31 297,19 C303,33 309,53 307,67 C313,91 313,120 313,120Z" fill="#2e7d32"/>
+      <path d="M385,120 C385,120 383,91 389,67 C394,52 382,32 386,20 C392,34 398,54 396,68 C402,92 402,120 402,120Z" fill="#1b5e20"/>
+      <path d="M475,120 C475,120 473,89 479,65 C484,50 472,30 476,18 C482,32 488,52 486,66 C492,90 492,120 492,120Z" fill="#388e3c"/>
+      <path d="M565,120 C565,120 563,92 569,68 C574,53 562,33 566,21 C572,35 578,55 576,69 C582,93 582,120 582,120Z" fill="#2e7d32"/>
+      <path d="M655,120 C655,120 653,90 659,66 C664,51 652,31 656,19 C662,33 668,53 666,67 C672,91 672,120 672,120Z" fill="#1b5e20"/>
+      <path d="M745,120 C745,120 743,93 749,69 C754,54 742,34 746,22 C752,36 758,56 756,70 C762,94 762,120 762,120Z" fill="#388e3c"/>
+      <path d="M835,120 C835,120 833,91 839,67 C844,52 832,32 836,20 C842,34 848,54 846,68 C852,92 852,120 852,120Z" fill="#2e7d32"/>
+      <path d="M925,120 C925,120 923,88 929,64 C934,49 922,29 926,17 C932,31 938,51 936,65 C942,89 942,120 942,120Z" fill="#1b5e20"/>
+      <path d="M1015,120 C1015,120 1013,90 1019,66 C1024,51 1012,31 1016,19 C1022,33 1028,53 1026,67 C1032,91 1032,120 1032,120Z" fill="#388e3c"/>
+      <path d="M1082,120 C1082,120 1080,92 1086,68 C1091,53 1079,33 1083,21 C1089,35 1095,55 1093,70 C1099,94 1099,120 1099,120Z" fill="#2e7d32"/>
+    </g>
+    <!-- tiny flowers in grass -->
+    <circle cx="60" cy="83" r="4" fill="#ff80ab"/><circle cx="60" cy="83" r="2" fill="#ffe066"/>
+    <circle cx="178" cy="87" r="3.5" fill="#b39ddb"/><circle cx="178" cy="87" r="1.8" fill="white"/>
+    <circle cx="318" cy="81" r="4" fill="#ff6eb4"/><circle cx="318" cy="81" r="2" fill="#fff"/>
+    <circle cx="462" cy="85" r="3.5" fill="#ffcc02"/><circle cx="462" cy="85" r="1.8" fill="#fff"/>
+    <circle cx="600" cy="80" r="4" fill="#ff80ab"/><circle cx="600" cy="80" r="2" fill="#ffe066"/>
+    <circle cx="720" cy="86" r="3.5" fill="#80deea"/><circle cx="720" cy="86" r="1.8" fill="white"/>
+    <circle cx="858" cy="82" r="4" fill="#ff6eb4"/><circle cx="858" cy="82" r="2" fill="#fff"/>
+    <circle cx="980" cy="84" r="3.5" fill="#b39ddb"/><circle cx="980" cy="84" r="1.8" fill="white"/>
+    <!-- mushroom -->
+    <ellipse cx="396" cy="101" rx="11" ry="6" fill="#c62828" opacity=".85"/>
+    <rect x="393" y="101" width="6" height="13" rx="3" fill="#f5f5f5"/>
+    <circle cx="391" cy="96" r="1.5" fill="white" opacity=".8"/>
+    <circle cx="399" cy="94" r="1.2" fill="white" opacity=".8"/>
+    <!-- stones -->
+    <ellipse cx="702" cy="109" rx="14" ry="7" fill="#9e9e9e" opacity=".55"/>
+    <ellipse cx="714" cy="111" rx="10" ry="5.5" fill="#bdbdbd" opacity=".55"/>
+  </svg>
+
+  <!-- Flowers -->
+  <div class="fd" style="bottom:156px;left:3%;font-size:2rem;animation-duration:1.9s;" onclick="fPop(this)">🌷</div>
+  <div class="fd" style="bottom:150px;left:9%;font-size:1.8rem;animation-duration:2.3s;animation-delay:.3s;" onclick="fPop(this)">🌻</div>
+  <div class="fd" style="bottom:156px;left:15%;font-size:2rem;animation-duration:1.7s;animation-delay:.6s;" onclick="fPop(this)">🌹</div>
+  <div class="fd" style="bottom:168px;left:23%;font-size:1.6rem;animation-duration:2.5s;animation-delay:.1s;" onclick="fPop(this)">🌸</div>
+  <div class="fd" style="bottom:150px;right:3%;font-size:2rem;animation-duration:2.0s;animation-delay:.2s;" onclick="fPop(this)">🌼</div>
+  <div class="fd" style="bottom:156px;right:9%;font-size:1.8rem;animation-duration:1.9s;animation-delay:.8s;" onclick="fPop(this)">💐</div>
+  <div class="fd" style="bottom:156px;right:15%;font-size:2rem;animation-duration:2.1s;animation-delay:.4s;" onclick="fPop(this)">🌺</div>
+  <div class="fd" style="bottom:168px;right:23%;font-size:1.6rem;animation-duration:1.7s;animation-delay:.7s;" onclick="fPop(this)">🌼</div>
+  <div style="position:absolute;bottom:156px;left:39%;font-size:1.7rem;animation:fS 3.2s ease-in-out infinite alternate;pointer-events:none;">🍄</div>
+  <div style="position:absolute;bottom:156px;right:39%;font-size:1.5rem;animation:fS 2.9s ease-in-out infinite alternate;animation-delay:.5s;pointer-events:none;">🌾</div>
+
+  <!-- Butterflies -->
+  <div class="bfly" id="bf1" style="top:70px;left:8%;animation-duration:11s;">🦋</div>
+  <div class="bfly" id="bf2" style="top:95px;right:12%;animation-duration:14s;animation-delay:-5s;">🦋</div>
+  <div class="bfly" id="bf3" style="top:52px;left:45%;animation-duration:9s;animation-delay:-7s;">🐝</div>
+
+  <div id="sp">Hello! 🐰</div>
+  <div id="food"></div>
+  <div id="notes"><span class="nt">🎵</span><span class="nt">🎶</span><span class="nt">🎵</span></div>
+
+  <!-- BUNNY -->
+  <div class="bw" id="bw" onclick="clickBunny()">
+    <svg class="bun" viewBox="0 0 200 250" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="gB" cx="50%" cy="38%" r="55%"><stop offset="0%" stop-color="#fff8fc"/><stop offset="100%" stop-color="#f9d8ea"/></radialGradient>
+        <radialGradient id="gH" cx="45%" cy="36%" r="52%"><stop offset="0%" stop-color="#fffafd"/><stop offset="100%" stop-color="#f9d8ea"/></radialGradient>
+        <radialGradient id="gBl" cx="50%" cy="42%" r="55%"><stop offset="0%" stop-color="#fff4fa"/><stop offset="100%" stop-color="#fde9f5"/></radialGradient>
+        <filter id="gl"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <ellipse cx="68" cy="52" rx="21" ry="54" fill="url(#gB)" stroke="#f4aac8" stroke-width="2"/>
+      <ellipse class="eI" cx="68" cy="55" rx="11" ry="41" fill="#ffb3d0"/>
+      <ellipse cx="132" cy="52" rx="21" ry="54" fill="url(#gB)" stroke="#f4aac8" stroke-width="2"/>
+      <ellipse class="eI" cx="132" cy="55" rx="11" ry="41" fill="#ffb3d0"/>
+      <path d="M61 18 C61 13 68 10 68 18 C68 10 75 13 75 18 C75 24 68 30 68 30Z" fill="#ff99c0" opacity=".5"/>
+      <path d="M125 18 C125 13 132 10 132 18 C132 10 139 13 139 18 C139 24 132 30 132 30Z" fill="#ff99c0" opacity=".5"/>
+      <!-- accessories -->
+      <g id="aBow" style="display:none"><ellipse cx="56" cy="26" rx="14" ry="8" fill="#ff6eb4" stroke="#e91e8c" stroke-width="1.5" transform="rotate(-26 56 26)"/><ellipse cx="56" cy="26" rx="14" ry="8" fill="#ff6eb4" stroke="#e91e8c" stroke-width="1.5" transform="rotate(26 56 26)"/><circle cx="56" cy="26" r="5.5" fill="#ff3d8b"/><circle cx="56" cy="26" r="2" fill="white" opacity=".55"/></g>
+      <g id="aHat" style="display:none"><rect x="78" y="5" width="44" height="6" rx="3" fill="#1a237e"/><rect x="85" y="-18" width="30" height="25" rx="7" fill="#283593"/><rect x="87" y="-15" width="10" height="5" rx="2.5" fill="#ff6eb4"/></g>
+      <g id="aFlwr" style="display:none"><circle cx="100" cy="8" r="6.5" fill="#ffe066"/><circle cx="88" cy="9" r="6" fill="#ff6eb4"/><circle cx="112" cy="9" r="6" fill="#5ddba9"/><circle cx="82" cy="18" r="5.5" fill="#c084fc"/><circle cx="118" cy="18" r="5.5" fill="#ffb347"/><path d="M88 9 Q100 3 112 9" stroke="#66bb6a" stroke-width="2.5" fill="none"/></g>
+      <g id="aCrwn" style="display:none"><path d="M70 10 L80 -5 L90 5 L100 -10 L110 5 L120 -5 L130 10Z" fill="#fdd835" stroke="#f9a825" stroke-width="1.5" stroke-linejoin="round"/><circle cx="100" cy="3" r="4" fill="#e91e8c"/><circle cx="80" cy="8" r="3" fill="#2196f3"/><circle cx="120" cy="8" r="3" fill="#4caf50"/></g>
+      <g id="aGlss" style="display:none"><circle cx="78" cy="108" r="14" fill="none" stroke="#5c6bc0" stroke-width="3"/><circle cx="122" cy="108" r="14" fill="none" stroke="#5c6bc0" stroke-width="3"/><path d="M92 108 L108 108" stroke="#5c6bc0" stroke-width="3"/><path d="M64 105 L64 100 Q68 97 72 100" stroke="#5c6bc0" stroke-width="2.5" fill="none"/><path d="M136 105 L136 100 Q132 97 128 100" stroke="#5c6bc0" stroke-width="2.5" fill="none"/></g>
+      <g id="aScrf" style="display:none"><path d="M52 140 Q100 132 148 140 Q148 158 100 153 Q52 158 52 140Z" fill="#ff5722" opacity=".92"/><path d="M52 148 Q68 156 78 146 L78 164 Q68 170 52 162Z" fill="#ff7043"/></g>
+      <!-- body -->
+      <ellipse cx="100" cy="178" rx="58" ry="65" fill="url(#gB)" stroke="#f4aac8" stroke-width="2"/>
+      <ellipse cx="100" cy="181" rx="37" ry="45" fill="url(#gBl)"/>
+      <text x="90" y="190" font-size="10" fill="#f4aac8" opacity=".5">♥</text>
+      <text x="108" y="185" font-size="8" fill="#f4aac8" opacity=".4">♥</text>
+      <circle cx="100" cy="205" r="3" fill="#f4aac8" opacity=".45"/>
+      <!-- head -->
+      <ellipse cx="100" cy="107" rx="53" ry="51" fill="url(#gH)" stroke="#f4aac8" stroke-width="2"/>
+      <!-- eyes -->
+      <g id="eHap"><ellipse class="eO" cx="78" cy="104" rx="10.5" ry="11.5" fill="white" stroke="#f4aac8" stroke-width="1.5"/><ellipse cx="80" cy="106" rx="6.5" ry="7.5" fill="#2d1050"/><circle cx="82" cy="103" r="2.7" fill="white"/><circle cx="77" cy="108" r="1.3" fill="white" opacity=".65"/><path d="M69 99 Q74 95 80 98" stroke="#f4aac8" stroke-width="1.5" fill="none" stroke-linecap="round"/><ellipse class="eO" cx="122" cy="104" rx="10.5" ry="11.5" fill="white" stroke="#f4aac8" stroke-width="1.5"/><ellipse cx="124" cy="106" rx="6.5" ry="7.5" fill="#2d1050"/><circle cx="126" cy="103" r="2.7" fill="white"/><circle cx="121" cy="108" r="1.3" fill="white" opacity=".65"/><path d="M120 98 Q126 95 131 99" stroke="#f4aac8" stroke-width="1.5" fill="none" stroke-linecap="round"/></g>
+      <g id="eSlp" style="display:none"><path d="M68 105 Q78 97 88 105" stroke="#e91e8c" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M112 105 Q122 97 132 105" stroke="#e91e8c" stroke-width="3.5" fill="none" stroke-linecap="round"/><text x="140" y="85" font-size="13" fill="#b39ddb" font-weight="bold" font-family="sans-serif">z</text><text x="150" y="73" font-size="10" fill="#b39ddb" font-weight="bold" font-family="sans-serif">z</text><text x="157" y="63" font-size="8" fill="#b39ddb" font-weight="bold" font-family="sans-serif">z</text></g>
+      <g id="eHrt" style="display:none"><text x="63" y="116" font-size="26" fill="#ff3d8b" filter="url(#gl)">♥</text><text x="107" y="116" font-size="26" fill="#ff3d8b" filter="url(#gl)">♥</text></g>
+      <g id="eStr" style="display:none"><text x="63" y="116" font-size="24" fill="#ffd600" filter="url(#gl)">★</text><text x="107" y="116" font-size="24" fill="#ffd600" filter="url(#gl)">★</text></g>
+      <g id="eSad" style="display:none"><path d="M68 101 Q78 109 88 101" stroke="#88aacc" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M112 101 Q122 109 132 101" stroke="#88aacc" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="72" cy="115" rx="3.2" ry="5.5" fill="#aacce8" opacity=".7"/><ellipse cx="128" cy="115" rx="3.2" ry="5.5" fill="#aacce8" opacity=".7"/></g>
+      <!-- nose & mouth -->
+      <ellipse class="ns" cx="100" cy="122" rx="7" ry="5" fill="#ff9eb5"/>
+      <ellipse cx="100" cy="121" rx="3.5" ry="2" fill="#ff6690" opacity=".5"/>
+      <path id="mth" d="M93 129 Q100 137 107 129" stroke="#f4aac8" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- whiskers -->
+      <line x1="52" y1="121" x2="88" y2="124" stroke="#f4c0d8" stroke-width="1.7" stroke-linecap="round"/>
+      <line x1="52" y1="128" x2="88" y2="127" stroke="#f4c0d8" stroke-width="1.7" stroke-linecap="round"/>
+      <line x1="112" y1="124" x2="148" y2="121" stroke="#f4c0d8" stroke-width="1.7" stroke-linecap="round"/>
+      <line x1="112" y1="127" x2="148" y2="128" stroke="#f4c0d8" stroke-width="1.7" stroke-linecap="round"/>
+      <!-- blush -->
+      <ellipse cx="72" cy="121" rx="13" ry="9" fill="#ffb3ce" opacity=".48"/>
+      <ellipse cx="128" cy="121" rx="13" ry="9" fill="#ffb3ce" opacity=".48"/>
+      <circle cx="66" cy="115" r="1.6" fill="#ff99bb" opacity=".6"/>
+      <circle cx="134" cy="115" r="1.6" fill="#ff99bb" opacity=".6"/>
+      <!-- paws -->
+      <ellipse cx="50" cy="196" rx="21" ry="14" fill="url(#gB)" stroke="#f4aac8" stroke-width="1.5"/>
+      <circle cx="43" cy="191" r="4" fill="#ffd0e8" opacity=".7"/><circle cx="52" cy="188" r="4" fill="#ffd0e8" opacity=".7"/><circle cx="61" cy="191" r="4" fill="#ffd0e8" opacity=".7"/>
+      <ellipse cx="150" cy="196" rx="21" ry="14" fill="url(#gB)" stroke="#f4aac8" stroke-width="1.5"/>
+      <circle cx="143" cy="191" r="4" fill="#ffd0e8" opacity=".7"/><circle cx="152" cy="188" r="4" fill="#ffd0e8" opacity=".7"/><circle cx="161" cy="191" r="4" fill="#ffd0e8" opacity=".7"/>
+      <!-- feet -->
+      <ellipse cx="74" cy="235" rx="27" ry="13" fill="#f4c8dc" stroke="#f4aac8" stroke-width="1.5"/>
+      <circle cx="60" cy="230" r="4.5" fill="#ffd0e8" opacity=".75"/><circle cx="74" cy="227" r="4.5" fill="#ffd0e8" opacity=".75"/><circle cx="88" cy="230" r="4.5" fill="#ffd0e8" opacity=".75"/>
+      <ellipse cx="126" cy="235" rx="27" ry="13" fill="#f4c8dc" stroke="#f4aac8" stroke-width="1.5"/>
+      <circle cx="112" cy="230" r="4.5" fill="#ffd0e8" opacity=".75"/><circle cx="126" cy="227" r="4.5" fill="#ffd0e8" opacity=".75"/><circle cx="140" cy="230" r="4.5" fill="#ffd0e8" opacity=".75"/>
+      <!-- tail -->
+      <ellipse class="tl" cx="160" cy="192" rx="19" ry="17" fill="white" stroke="#f4aac8" stroke-width="1.5"/>
+      <ellipse cx="160" cy="190" rx="10" ry="9" fill="white" opacity=".65"/>
+    </svg>
+  </div>
+
+  <!-- WARDROBE -->
+  <div id="ward">
+    <div class="wT">👗 Wardrobe</div>
+    <div class="wI" id="wBow"  onclick="tAcc('bow','aBow','wBow')"><span class="wE">🎀</span><span class="wL">Pink Bow</span></div>
+    <div class="wI" id="wHat"  onclick="tAcc('hat','aHat','wHat')"><span class="wE">🎩</span><span class="wL">Top Hat</span></div>
+    <div class="wI" id="wFlwr" onclick="tAcc('flwr','aFlwr','wFlwr')"><span class="wE">🌸</span><span class="wL">Flwr Crown</span></div>
+    <div class="wI" id="wCrwn" onclick="tAcc('crwn','aCrwn','wCrwn')"><span class="wE">👑</span><span class="wL">Gold Crown</span></div>
+    <div class="wI" id="wGlss" onclick="tAcc('glss','aGlss','wGlss')"><span class="wE">👓</span><span class="wL">Glasses</span></div>
+    <div class="wI" id="wScrf" onclick="tAcc('scrf','aScrf','wScrf')"><span class="wE">🧣</span><span class="wL">Cozy Scarf</span></div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE CONTENT -->
+<div style="height:calc(100vh - 80px);"></div>
+<div style="position:relative;z-index:10;background:linear-gradient(180deg,transparent,rgba(200,230,255,.22) 70px);padding-top:30px;">
+<div class="sPage">
+  <div class="pH">
+    <div class="hT">🐰 Mochi's Magical Garden 🌸</div>
+    <div class="hS">✨ click clouds · feed her · dress her · love her ✨
+      <span class="wb" id="wbdg">☀️ Sunny</span>
+    </div>
+  </div>
+  <div class="mA"><span class="mP" id="mPill">😊 Happy & Bouncy!</span></div>
+  <div class="con">
+    <!-- STATS -->
+    <div class="gc">
+      <div class="ct">💕 Mochi's Stats</div>
+      <div class="sr"><span class="si">🍓</span><span class="sn">Hunger</span><div class="bb"><div class="bf" id="bHng" style="width:75%;background:linear-gradient(90deg,#ff6eb4,#e91e8c);"></div></div><span class="bv" id="vHng">75</span></div>
+      <div class="sr"><span class="si">✨</span><span class="sn">Happiness</span><div class="bb"><div class="bf" id="bHap" style="width:70%;background:linear-gradient(90deg,#ffe066,#ffa000);"></div></div><span class="bv" id="vHap">70</span></div>
+      <div class="sr"><span class="si">⚡</span><span class="sn">Energy</span><div class="bb"><div class="bf" id="bEng" style="width:88%;background:linear-gradient(90deg,#c084fc,#7c3aed);"></div></div><span class="bv" id="vEng">88</span></div>
+      <div class="sr"><span class="si">💖</span><span class="sn">Love</span><div class="bb"><div class="bf" id="bLov" style="width:62%;background:linear-gradient(90deg,#f472b6,#ec4899);"></div></div><span class="bv" id="vLov">62</span></div>
+      <div class="aBar" id="aBar"><div class="aFill" id="aFill"></div></div>
+    </div>
+    <!-- ACTIONS -->
+    <div class="gc">
+      <div class="ct">🌸 Take Care of Mochi</div>
+      <div class="bg">
+        <button class="ab bpat" id="b-pat"   onclick="doA('pat')">👋 Pat</button>
+        <button class="ab bks"  id="b-kiss"  onclick="doA('kiss')">💋 Kiss</button>
+        <button class="ab bdn"  id="b-dance" onclick="doA('dance')">💃 Dance</button>
+        <button class="ab bpl"  id="b-play"  onclick="doA('play')">🎮 Play</button>
+        <button class="ab bfd"  id="b-straw" onclick="doA('strawberry')">🍓 Strawberry</button>
+        <button class="ab bfd"  id="b-cake"  onclick="doA('cake')">🍰 Cake</button>
+        <button class="ab btr"  id="b-carr"  onclick="doA('carrot')">🥕 Carrot</button>
+        <button class="ab bfd"  id="b-cook"  onclick="doA('cookie')">🍪 Cookie</button>
+        <button class="ab bfd"  id="b-wm"    onclick="doA('watermelon')">🍉 Watermelon</button>
+        <button class="ab bsl"  id="b-sleep" onclick="doA('sleep')">🌙 Sleep</button>
+      </div>
+    </div>
+    <!-- GARDEN -->
+    <div class="gb">
+      <div class="gT">🌱 Mochi's Flower Garden 🌱</div>
+      <div class="planted" id="gPl"></div>
+      <div class="bg">
+        <button class="ab bplt" onclick="plant('🌷')">🌷</button>
+        <button class="ab bplt" onclick="plant('🌻')">🌻</button>
+        <button class="ab bplt" onclick="plant('🌹')">🌹</button>
+        <button class="ab bplt" onclick="plant('🌸')">🌸</button>
+        <button class="ab bplt" onclick="plant('🌼')">🌼</button>
+        <button class="ab bplt" onclick="plant('💐')">💐</button>
+        <button class="ab bplt" onclick="plant('🌺')">🌺</button>
+        <button class="ab bplt" onclick="plant('🌿')">🌿</button>
+      </div>
+    </div>
+    <!-- DIARY -->
+    <div class="gc">
+      <div class="ct">📖 Mochi's Diary</div>
+      <div id="diary"></div>
+    </div>
+    <div style="text-align:center;font-family:'Baloo 2',cursive;font-size:.95rem;font-weight:800;color:rgba(255,255,255,.85);text-shadow:1px 1px 0 rgba(233,30,140,.3);padding-bottom:20px;">made with 💖 · give mochi all the love ~ 🐰✨</div>
+  </div>
+</div>
+</div>
+
+<script>
+// STATE
+const S={hunger:75,happiness:70,energy:88,love:62,sleeping:false,busy:false,
+  accs:{bow:false,hat:false,flwr:false,crwn:false,glss:false,scrf:false},log:[]};
+
+// CURSOR - single emoji trail
+const curEl=document.getElementById('cur');
+const curMap={happy:'🌸',loved:'💖',star:'✨',sleeping:'💤',hungry:'🍓',stormy:'🌧️',hungry2:'🍓',default:'🌸'};
+let curMood='happy';
+document.addEventListener('mousemove',e=>{
+  curEl.style.left=e.clientX+'px';curEl.style.top=e.clientY+'px';
+  curEl.textContent=curMap[curMood]||'🌸';
+});
+
+// SKY THEMES - NO ORANGE
+const TT={
+  night:   {st:'#080820',sb:'#0d0d38',gb:'#1b5e20',gf:'#2e7d32',sO:0,mO:1,sR:90,mR:88,sT:28,mT:28,lbl:'🌙 Night'},
+  dawn:    {st:'#880e4f',sb:'#c2185b',gb:'#388e3c',gf:'#43a047',sO:.55,mO:.35,sR:62,mR:138,sT:65,mT:60,lbl:'🌄 Dawn'},
+  morning: {st:'#1565c0',sb:'#b3e5fc',gb:'#4caf50',gf:'#66bb6a',sO:1,mO:0,sR:56,mR:210,sT:40,mT:38,lbl:'🌤️ Morning'},
+  noon:    {st:'#0277bd',sb:'#81d4fa',gb:'#4caf50',gf:'#66bb6a',sO:1,mO:0,sR:110,mR:260,sT:22,mT:20,lbl:'☀️ Noon'},
+  afternoon:{st:'#0288d1',sb:'#b3e5fc',gb:'#4caf50',gf:'#66bb6a',sO:1,mO:0,sR:168,mR:285,sT:30,mT:28,lbl:'🌞 Afternoon'},
+  dusk:    {st:'#880e4f',sb:'#ad1457',gb:'#2e7d32',gf:'#388e3c',sO:.5,mO:.5,sR:218,mR:168,sT:58,mT:55,lbl:'🌇 Dusk'},
+  evening: {st:'#1a237e',sb:'#283593',gb:'#1b5e20',gf:'#2e7d32',sO:.06,mO:.95,sR:254,mR:110,sT:30,mT:28,lbl:'🌆 Evening'},
+};
+const WO={
+  rainy: {st:'#455a64',sb:'#607d8b',gb:'#388e3c',gf:'#43a047',lbl:'🌧️ Rainy'},
+  stormy:{st:'#1c1c1c',sb:'#37474f',gb:'#1b5e20',gf:'#2e7d32',lbl:'⛈️ Stormy'},
+  snowy: {st:'#90a4ae',sb:'#eceff1',gb:'#a5d6a7',gf:'#c8e6c9',lbl:'❄️ Snowy'},
+};
+function getTK(){
+  const h=new Date().getHours();
+  if(h<5)return'night';if(h<7)return'dawn';if(h<11)return'morning';
+  if(h<14)return'noon';if(h<17)return'afternoon';if(h<20)return'dusk';return'evening';
+}
+function applySky(){
+  const tk=getTK();let th={...TT[tk]},wk=tk;
+  if(S.sleeping){Object.assign(th,TT.night);wk='night';}
+  else if(S.happiness<30){Object.assign(th,WO.stormy);wk='stormy';}
+  else if(S.hunger<28){Object.assign(th,WO.rainy);wk='rainy';}
+  else if(S.happiness>88&&S.love>82){Object.assign(th,WO.snowy);wk='snowy';}
+  document.getElementById('sky').style.background=`linear-gradient(180deg,${th.st} 0%,${th.sb} 100%)`;
+  const hillColors=[[th.gb,'cc'],[th.gf,'cc'],[th.gf,'88']];
+  ['h1','h2','h3'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el)el.style.background=`linear-gradient(180deg,${hillColors[i][0]},${hillColors[i][0]}${hillColors[i][1]})`;
+  });
+  const sun=document.getElementById('sunEl'),moon=document.getElementById('moonEl');
+  sun.style.opacity=th.sO;moon.style.opacity=th.mO;
+  sun.style.right=th.sR+'px';moon.style.right=th.mR+'px';
+  sun.style.top=th.sT+'px';moon.style.top=th.mT+'px';
+  document.getElementById('starL').classList.toggle('on',th.mO>0.5);
+  document.getElementById('stormL').classList.toggle('on',wk==='stormy');
+  document.getElementById('rainW').classList.toggle('on',wk==='rainy');
+  document.getElementById('snowW').classList.toggle('on',wk==='snowy');
+  document.getElementById('rainbow').classList.toggle('on',wk==='snowy'&&S.happiness>65);
+  ['bf1','bf2','bf3'].forEach(id=>document.getElementById(id).style.opacity=['night','evening','stormy'].includes(wk)?'0':'1');
+  document.getElementById('wbdg').textContent=th.lbl;
+}
+
+// BUILD SKY PARTICLES
+(function(){
+  const sky=document.getElementById('sky');
+  const sl=document.getElementById('starL');
+  for(let i=0;i<130;i++){const s=document.createElement('div');s.className='star';const sz=.8+Math.random()*2.5;s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*62}%;animation-duration:${2+Math.random()*3.5}s;animation-delay:${-Math.random()*3}s;`;sl.appendChild(s);}
+  const rw=document.getElementById('rainW');
+  for(let i=0;i<90;i++){const d=document.createElement('div');d.className='rdrop';const h=12+Math.random()*22;d.style.cssText=`left:${Math.random()*100}%;height:${h}px;animation-duration:${.5+Math.random()*.5}s;animation-delay:${-Math.random()*1.5}s;opacity:${.5+Math.random()*.4};`;rw.appendChild(d);}
+  const sw=document.getElementById('snowW');const fl=['❄','❅','❆','·','✦'];
+  for(let i=0;i<65;i++){const s=document.createElement('div');s.className='snow';s.textContent=fl[Math.floor(Math.random()*fl.length)];s.style.cssText=`left:${Math.random()*100}%;font-size:${.6+Math.random()*1}rem;animation-duration:${4+Math.random()*7}s;animation-delay:${-Math.random()*8}s;color:${['#fff','#e8f4fd','#ffe0f0'][Math.floor(Math.random()*3)]};`;sw.appendChild(s);}
+  function mkCloud(){
+    const c=document.createElement('div');c.className='cloud';
+    const w=90+Math.random()*140,h=22+Math.random()*32;
+    c.style.cssText=`width:${w}px;height:${h}px;top:${8+Math.random()*110}px;left:-${w+20}px;animation-duration:${22+Math.random()*24}s;animation-delay:${-Math.random()*24}s;background:rgba(255,255,255,${.78+Math.random()*.2});`;
+    c.addEventListener('click',e=>{e.stopPropagation();cloudClick(e,c);});
+    sky.appendChild(c);setTimeout(()=>c.remove(),55000);
+  }
+  for(let i=0;i<8;i++) mkCloud();setInterval(mkCloud,9000);
+})();
+
+// CLOUD CLICK
+function cloudClick(e,c){
+  const x=e.clientX,y=e.clientY;
+  let emojis,count=8,msg='';
+  if(curMood==='stormy'){emojis=['💧','🌧️','☁️','💦','⚡'];count=10;msg="*thunder rumbles* 😢";document.getElementById('rainW').classList.add('on');setTimeout(()=>{if(curMood!=='rainy'&&curMood!=='stormy')document.getElementById('rainW').classList.remove('on');},2000);}
+  else if(curMood==='hungry'){emojis=['💧','😢','💦','🌧️'];msg="Need food first!! 🍓";}
+  else if(curMood==='snowy'||curMood==='star'){emojis=['❄️','⛄','✨','🌟','💖','🌈'];count=12;msg="Rainbow magic! 🌈✨";c.style.background='rgba(255,230,255,.95)';setTimeout(()=>c.style.background='',1200);}
+  else if(curMood==='sleeping'){emojis=['💤','😴','🌙','⭐'];msg="Zzz... shhh 💤";}
+  else if(curMood==='loved'){emojis=['💖','🌸','✨','💕','🌺'];count=10;msg="Love clouds! 💖☁️";}
+  else{emojis=['🌸','☀️','🌈','✨','💐','🌼'];msg="Fluffy cloud! ☁️✨";}
+  speak(msg);
+  for(let i=0;i<count;i++){
+    const el=document.createElement('div');el.className='cburst';
+    el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    el.style.cssText=`left:${x+Math.random()*120-60}px;top:${y+Math.random()*80-40}px;font-size:${1.2+Math.random()*.9}rem;animation-delay:${Math.random()*.4}s;`;
+    document.body.appendChild(el);setTimeout(()=>el.remove(),1600);
+  }
+}
+
+// TIME BADGE
+function updTime(){
+  const d=new Date(),h=d.getHours(),m=d.getMinutes();
+  const ic=['🌙','🌙','🌙','🌙','🌙','🌄','🌄','🌤️','☀️','☀️','☀️','☀️','☀️','☀️','☀️','☀️','☀️','🌇','🌇','🌆','🌆','🌙','🌙','🌙'];
+  const ap=h>=12?'PM':'AM',hh=h%12||12;
+  document.getElementById('tBdg').textContent=`${ic[h]} ${hh}:${m.toString().padStart(2,'0')} ${ap}`;
+}
+setInterval(updTime,15000);updTime();
+
+// EYES & MOUTH
+function setEyes(t){['Hap','Slp','Hrt','Str','Sad'].forEach(k=>{document.getElementById('e'+k).style.display=k.toLowerCase().replace('hap','hap').replace('slp','slp').replace('hrt','hrt').replace('str','str').replace('sad','sad')===t?'block':'none';});}
+// simplified
+const eyeMap={happy:'eHap',sleep:'eSlp',heart:'eHrt',star:'eStr',sad:'eSad'};
+function setEye(t){Object.values(eyeMap).forEach(id=>document.getElementById(id).style.display='none');if(eyeMap[t])document.getElementById(eyeMap[t]).style.display='block';}
+function setMouth(sad){document.getElementById('mth').setAttribute('d',sad?'M93 134 Q100 125 107 134':'M93 129 Q100 137 107 129');}
+
+// MOOD CONFIG
+const mC=[
+  {k:'stormy', ch:s=>s.happiness<30,           ey:'sad',   mo:true,  p:'😢 Feeling sad...',      bg:'#e0e8ff',c:'#3949ab',b:'#7986cb',tr:'🌧️'},
+  {k:'hungry', ch:s=>s.hunger<28,              ey:'sad',   mo:true,  p:'😭 So hungry!!',         bg:'#ffe0e0',c:'#c0392b',b:'#ff9999',tr:'🍓'},
+  {k:'sleeping',ch:s=>s.sleeping,              ey:'sleep', mo:false, p:'😴 Sweet dreams...',     bg:'#ede7f6',c:'#6c3dbf',b:'#b39ddb',tr:'💤'},
+  {k:'star',   ch:s=>s.happiness>90&&s.love>85,ey:'star',  mo:false, p:'🌟 Absolutely Overjoyed!',bg:'#fffde7',c:'#f57f17',b:'#ffe066',tr:'⭐'},
+  {k:'loved',  ch:s=>s.love>78&&s.happiness>75,ey:'heart', mo:false, p:'🥰 So loved~',           bg:'#ffe0f5',c:'#d63384',b:'#ff99cc',tr:'💖'},
+  {k:'happy',  ch:s=>s.happiness>60,           ey:'happy', mo:false, p:'✨ Happy & Bouncy!',     bg:'#fff9c4',c:'#b5860b',b:'#ffd966',tr:'🌸'},
+  {k:'default',ch:()=>true,                    ey:'happy', mo:false, p:'🐰 Meep meep~',          bg:'#f5e6ff',c:'#9b4dca',b:'#d4a0ff',tr:'🌸'},
+];
+function renderMood(){
+  const cfg=mC.find(m=>m.ch(S));
+  setEye(cfg.ey);setMouth(cfg.mo);
+  const p=document.getElementById('mPill');
+  p.textContent=cfg.p;p.style.background=cfg.bg;p.style.color=cfg.c;p.style.border=`2.5px solid ${cfg.b}`;
+  curMood=cfg.k;applySky();
+}
+
+// STATS
+function renderStats(){
+  [['Hng',S.hunger],['Hap',S.happiness],['Eng',S.energy],['Lov',S.love]].forEach(([k,v])=>{
+    document.getElementById('b'+k).style.width=Math.round(v)+'%';
+    document.getElementById('v'+k).textContent=Math.round(v);
+  });
+}
+
+// DIARY
+function nowS(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
+function addLog(msg){S.log.unshift({t:nowS(),msg});S.log=S.log.slice(0,12);
+  document.getElementById('diary').innerHTML=S.log.map(e=>`<div class="de"><span class="dt">${e.t}</span>${e.msg}</div>`).join('');}
+
+// SPEECH
+let _st;
+function speak(txt){const el=document.getElementById('sp');el.textContent=txt;el.classList.add('show');clearTimeout(_st);_st=setTimeout(()=>el.classList.remove('show'),3500);}
+
+// BUNNY ANIM
+let _at;
+function anim(t,dur){
+  const w=document.getElementById('bw');
+  w.classList.remove('hop','spin','wiggle','dancing');void w.offsetWidth;
+  w.classList.add(t);clearTimeout(_at);_at=setTimeout(()=>w.classList.remove(t),dur||750);
+}
+
+// PROGRESS BAR
+function setBusy(ms){
+  S.busy=true;document.querySelectorAll('.ab:not(#b-sleep)').forEach(b=>b.classList.add('busy'));
+  const bar=document.getElementById('aBar'),fill=document.getElementById('aFill');
+  bar.classList.add('show');fill.style.transition='none';fill.style.width='0%';
+  setTimeout(()=>{fill.style.transition=`width ${ms}ms linear`;fill.style.width='100%';},20);
+  setTimeout(()=>{S.busy=false;document.querySelectorAll('.ab').forEach(b=>b.classList.remove('busy'));bar.classList.remove('show');fill.style.width='0%';},ms);
+}
+
+// SHOW FOOD
+const foodMp={strawberry:'🍓🍓',cake:'🍰✨',carrot:'🥕🥕',cookie:'🍪',watermelon:'🍉'};
+function showFood(em){
+  const el=document.getElementById('food');el.textContent=em;
+  el.classList.remove('show');void el.offsetWidth;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2900);
+}
+
+// MESSAGES
+const M={
+  pat:       ["Mochi twitches her cute nose! 💕","Purr~ so warm! 🥰","She does a happy binky! ✨","Her ears wiggle with joy! 🐰"],
+  kiss:      ["Her ears go bright pink! 💋","She peeks shyly! 🙈","A tiny lick back! 💖","Mochi does a little spin! 💕"],
+  dance:     ["Mochi is dancing! 💃🎵","She boogies to the beat! 🎶✨","Best dancer in the garden! 🌸💃","Mochi's doing the bunny shuffle! 🐰🎵"],
+  play:      ["Boing boing! Mochi zooms! 🐇","She chases a butterfly! 🦋","Zoomies activated! 🌀","Biggest leap ever! 🌟"],
+  strawberry:["Nom nom! Loves strawberries! 🍓","So sweet! Eyes sparkle! ✨","Yummy yummy! 😋","More please! 🍓"],
+  cake:      ["OMG CAKE! Best day ever! 🍰","Frosting on her nose! 🎂✨","Mochi is in heaven! 😄","She ate the whole slice! 🍰"],
+  carrot:    ["Crunch crunch! Classic! 🥕","She nods approvingly! 💪","Healthy & yummy! 🌿","Loves her veggies! 🥕"],
+  cookie:    ["Cookie crumbles everywhere! 🍪","She saves the last bite! 😄","So crispy! 🍪✨","Whiskers covered in crumbs! 🍪"],
+  watermelon:["Splashy & sweet! 🍉","Juice on her paws! 😄","Favourite summer treat! 🍉✨","She buried her face in it! 🍉"],
+  sleep:     ["Nighty night~ 🌙","Sweet bunny dreams! 💤","Mochi closes her eyes... 😴"],
+  wake:      ["Good morning sunshine! ☀️","Mochi yawns adorably~ 🐰","Ready for adventures! 🌸"],
+};
+function pick(k){const a=M[k];return a[Math.floor(Math.random()*a.length)];}
+function cl(v){return Math.max(0,Math.min(100,v));}
+
+// DO ACTION
+function doA(type){
+  if(S.busy&&type!=='sleep')return;
+  if(S.sleeping&&type!=='sleep'){speak("Zzz… let me sleep! 💤");anim('wiggle');return;}
+  let msg='';
+  if(type==='sleep'){
+    if(S.sleeping){S.sleeping=false;S.energy=cl(S.energy+40);msg=pick('wake');anim('hop',800);document.getElementById('b-sleep').textContent='🌙 Sleep';}
+    else{S.sleeping=true;msg=pick('sleep');anim('wiggle',600);document.getElementById('b-sleep').textContent='☀️ Wake Up';}
+    speak(msg);addLog(msg);renderStats();renderMood();return;
+  }
+  if(type==='dance'){
+    if(S.energy<12){speak("Mochi is too tired to dance! 😴");return;}
+    msg=pick('dance');S.happiness=cl(S.happiness+28);S.energy=cl(S.energy-12);
+    setBusy(4500);
+    const w=document.getElementById('bw');w.classList.remove('hop','spin','wiggle','dancing');void w.offsetWidth;w.classList.add('dancing');
+    document.getElementById('notes').classList.add('show');speak(msg);addLog(msg);
+    setTimeout(()=>{w.classList.remove('dancing');document.getElementById('notes').classList.remove('show');renderStats();renderMood();},4500);return;
+  }
+  if(type==='play'){
+    msg=pick('play');S.happiness=cl(S.happiness+20);S.energy=cl(S.energy-16);S.hunger=cl(S.hunger-10);
+    setBusy(2000);let h=0;const dH=()=>{if(h<3){anim('hop',500);h++;setTimeout(dH,600);}};dH();
+    speak(msg);addLog(msg);renderStats();renderMood();return;
+  }
+  if(type==='pat'){S.happiness=cl(S.happiness+22);S.love=cl(S.love+16);msg=pick('pat');setBusy(1200);anim('wiggle',1100);}
+  else if(type==='kiss'){S.love=cl(S.love+28);S.happiness=cl(S.happiness+16);msg=pick('kiss');setBusy(1000);anim('wiggle',900);}
+  else if(foodMp[type]){
+    const hM={strawberry:20,cake:32,carrot:26,cookie:18,watermelon:22};
+    const haM={strawberry:9,cake:18,carrot:5,cookie:12,watermelon:14};
+    S.hunger=cl(S.hunger+(hM[type]||18));S.happiness=cl(S.happiness+(haM[type]||8));
+    msg=pick(type);showFood(foodMp[type]);setBusy(2600);anim('hop',500);
+  }
+  speak(msg);addLog(msg);renderStats();renderMood();
+}
+
+// CLICK BUNNY
+function clickBunny(){
+  if(S.busy)return;
+  const p=["Meep meep! 🐰","Boing! ✨","Hehe~! 💕","Squeak! 🌸","More pets please! 💖","🌟 Yay!","Nyah~! 🐾","*nose twitch* 🐰","Hop hop! 🐇"];
+  speak(p[Math.floor(Math.random()*p.length)]);anim(['hop','wiggle','spin'][Math.floor(Math.random()*3)],700);
+}
+
+// WARDROBE
+function tAcc(name,svgId,btnId){
+  S.accs[name]=!S.accs[name];
+  document.getElementById(svgId).style.display=S.accs[name]?'block':'none';
+  document.getElementById(btnId).classList.toggle('on',S.accs[name]);
+  const lb={bow:'a pink bow 🎀',hat:'a top hat 🎩',flwr:'a flower crown 🌸',crwn:'a gold crown 👑',glss:'cute glasses 👓',scrf:'a cozy scarf 🧣'};
+  const msg=S.accs[name]?`Mochi wears ${lb[name]}! Cute!`:`Mochi removed the ${lb[name]}!`;
+  speak(msg);addLog(msg);anim('wiggle',600);
+}
+
+// FLOWER POP
+function fPop(el){
+  el.style.transform='scale(1.8) rotate(24deg)';setTimeout(()=>el.style.transform='',420);
+  const p=["Pretty flower! 🌸","Mochi sniffs it~ 🐰","Smells divine! ✨","Her favourite! 💕"];
+  speak(p[Math.floor(Math.random()*p.length)]);
+}
+
+// PLANT
+function plant(em){
+  const el=document.createElement('span');el.className='pf';el.textContent=em;
+  el.style.animationDelay=(Math.random()*.3)+'s';
+  el.onclick=()=>{el.style.transform='scale(0)';setTimeout(()=>el.remove(),300);};
+  document.getElementById('gPl').appendChild(el);
+  S.happiness=cl(S.happiness+5);speak("A new flower bloomed! 🌱✨");
+  addLog(`Planted ${em} in the garden!`);renderStats();renderMood();
+}
+
+// PETALS - sparse
+const pE=['🌸','🌺','🌷','🌼','💐','✨','🍀'];let pA=0;
+function spawnPetal(){
+  if(pA>5)return;pA++;
+  const el=document.createElement('div');el.className='petal';
+  el.textContent=pE[Math.floor(Math.random()*pE.length)];
+  el.style.cssText=`left:${Math.random()*100}vw;font-size:${.9+Math.random()*1.2}rem;animation-duration:${10+Math.random()*12}s;`;
+  document.body.appendChild(el);setTimeout(()=>{el.remove();pA--;},26000);
+}
+for(let i=0;i<4;i++) setTimeout(spawnPetal,i*1800);setInterval(spawnPetal,4000);
+
+// DECAY
+setInterval(()=>{
+  if(!S.sleeping){S.hunger=cl(S.hunger-.4);S.happiness=cl(S.happiness-.25);S.energy=cl(S.energy-.2);}
+  else{S.energy=cl(S.energy+.6);}
+  renderStats();renderMood();
+},3000);
+
+// INIT
+renderStats();renderMood();applySky();
+addLog("🌟 Mochi arrived in her magical garden~ 🐰");
+setTimeout(()=>speak("Hello!! Welcome to my garden! 🌸🐰"),900);
+setInterval(applySky,60000);
+</script>
+</body>
+</html>
